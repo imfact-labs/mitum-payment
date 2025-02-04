@@ -2,13 +2,13 @@ package payment
 
 import (
 	"context"
+	"github.com/ProtoconNet/mitum-payment/types"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-payment/state"
-	"github.com/ProtoconNet/mitum-payment/types"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 )
@@ -100,6 +100,35 @@ func (opp *UpdateAccountInfoProcessor) PreProcess(
 			)), nil
 	}
 
+	st, err = cstate.ExistsState(
+		state.AccountRecordStateKey(fact.Contract().String(), fact.Sender().String()),
+		"account record", getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMStateNF).Errorf("record of account, %v in contract account %v",
+				fact.Sender(), fact.Contract(),
+			)), nil
+	}
+
+	accountRecord, err := state.GetAccountRecordFromState(st)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMStateValInvalid).Errorf("record of account, %v not found in contract account %v",
+				fact.Sender(), fact.Contract(),
+			)), nil
+	}
+	amount := accountRecord.Amount(fact.TransferLimit().Currency().String())
+	if amount == nil {
+		return nil, base.NewBaseOperationProcessReasonError(
+			common.ErrMPreProcess.
+				Wrap(common.ErrMValueInvalid).Errorf(
+				"record of account, %v for currency id, %v not found in contract account %v",
+				fact.Sender(), fact.TransferLimit().Currency(), fact.Contract(),
+			)), nil
+	}
+
 	return ctx, nil, nil
 }
 
@@ -111,19 +140,29 @@ func (opp *UpdateAccountInfoProcessor) Process( // nolint:dupl
 
 	st, _ := cstate.ExistsState(state.DesignStateKey(fact.Contract().String()), "service design", getStateFunc)
 	design, _ := state.GetDesignFromState(st)
+	st, _ = cstate.ExistsState(
+		state.AccountRecordStateKey(fact.Contract().String(), fact.Sender().String()),
+		"account record", getStateFunc)
+	accountRecord, _ := state.GetAccountRecordFromState(st)
+	amount := accountRecord.Amount(fact.TransferLimit().Currency().String())
 
-	accountInfo := types.NewAccountInfo(fact.Sender())
-	accountInfo.SetTransferLimit(fact.transferLimit)
-	accountInfo.SetPeriodTime(
-		fact.TransferLimit().Currency().String(),
-		[3]uint64{fact.StartTime(), fact.EndTime(), fact.Duration()},
-	)
-	err := design.UpdateAccount(accountInfo)
-	if err != nil {
-		return nil, base.NewBaseOperationProcessReasonError(
-			"failed to update info of account, %v in contract account %v: %w", fact.Sender(), fact.Contract(), err,
-		), nil
+	if amount.Big().IsZero() && fact.TransferLimit().Big().IsZero() {
+		design.RemoveAccount(fact.Sender())
+	} else {
+		accountInfo := types.NewAccountInfo(fact.Sender())
+		accountInfo.SetTransferLimit(fact.transferLimit)
+		accountInfo.SetPeriodTime(
+			fact.TransferLimit().Currency().String(),
+			[3]uint64{fact.StartTime(), fact.EndTime(), fact.Duration()},
+		)
+		err := design.UpdateAccount(accountInfo)
+		if err != nil {
+			return nil, base.NewBaseOperationProcessReasonError(
+				"failed to update info of account, %v in contract account %v: %w", fact.Sender(), fact.Contract(), err,
+			), nil
+		}
 	}
+
 	if err := design.IsValid(nil); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("invalid service design, %q; %w", fact.Contract(), err), nil
 	}

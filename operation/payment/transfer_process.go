@@ -136,7 +136,7 @@ func (opp *TransferProcessor) PreProcess(
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMStateValInvalid).Errorf("record of account, %v in contract account %v",
+				Wrap(common.ErrMStateValInvalid).Errorf("record of account, %v not found in contract account %v",
 				fact.Sender(), fact.Contract(),
 			)), nil
 	}
@@ -144,7 +144,7 @@ func (opp *TransferProcessor) PreProcess(
 	if amount == nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
-				Wrap(common.ErrMValueInvalid).Errorf("deposit of account, %v in contract account %v",
+				Wrap(common.ErrMValueInvalid).Errorf("deposit of account, %v not found in contract account %v",
 				fact.Sender(), fact.Contract(),
 			)), nil
 	} else if amount.Big().Compare(fact.Amount().Big()) < 0 {

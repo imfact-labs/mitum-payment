@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"github.com/ProtoconNet/mitum-currency/v3/common"
+	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
@@ -92,13 +93,13 @@ func (de *Design) UpdateAccount(account AccountInfo) error {
 	return nil
 }
 
-func (de *Design) RemoveAccount(account AccountInfo) error {
-	_, found := de.accounts[account.Address().String()]
+func (de *Design) RemoveAccount(account base.Address) error {
+	_, found := de.accounts[account.String()]
 	if !found {
-		return errors.Errorf("account, %v not registered in service", account.Address())
+		return errors.Errorf("account, %v not registered in service", account)
 	}
 
-	delete(de.accounts, account.Address().String())
+	delete(de.accounts, account.String())
 
 	return nil
 }
