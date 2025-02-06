@@ -151,29 +151,23 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 			state.NewDepositRecordStateValue(nRecord),
 		))
 
-		if !fact.TransferLimit().IsZero() || fact.startTime > 0 || fact.endTime > 0 || fact.duration > 0 {
-			// update AccountSetting
-			nSetting := types.NewSettings(fact.Sender())
-			nSetting.SetItem(cid.String(), fact.TransferLimit(), fact.StartTime(), fact.EndTime(), fact.Duration())
-			nDesign := types.NewDesign()
-			for _, v := range design.AccountSettings() {
-				nDesign.AddAccountSetting(v)
-			}
-			nDesign.UpdateAccountSetting(nSetting)
-
-			sts = append(sts, cstate.NewStateMergeValue(
-				state.DesignStateKey(fact.Contract().String()),
-				state.NewDesignStateValue(nDesign),
-			))
+		// update AccountSetting
+		nSetting := types.NewSettings(fact.Sender())
+		nSetting.SetItem(cid.String(), fact.TransferLimit(), fact.StartTime(), fact.EndTime(), fact.Duration())
+		nDesign := types.NewDesign()
+		for _, v := range design.AccountSettings() {
+			nDesign.AddAccountSetting(v)
 		}
-	} else {
-		// new deposit
-		if fact.TransferLimit().IsZero() && fact.startTime == 0 && fact.endTime == 0 && fact.duration == 0 {
+		if err := nDesign.UpdateAccountSetting(nSetting); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError(
-				"Fresh deposit cannot be set with 0(transfer limit), 0(start time), 0(end_time), 0(duration) setting of account, %v in contract account %v",
-				fact.Sender(), fact.Contract(),
-			), nil
+				"failed to update setting of account, %v in contract account, %v: %w", fact.Sender(), fact.Contract(), err), nil
 		}
+
+		sts = append(sts, cstate.NewStateMergeValue(
+			state.DesignStateKey(fact.Contract().String()),
+			state.NewDesignStateValue(nDesign),
+		))
+	} else {
 		nSetting := types.NewSettings(fact.Sender())
 		nSetting.SetItem(cid.String(), fact.TransferLimit(), fact.StartTime(), fact.EndTime(), fact.Duration())
 		nDesign := types.NewDesign()
@@ -208,7 +202,6 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 			state.DepositRecordStateKey(fact.Contract().String(), fact.Sender().String()),
 			state.NewDepositRecordStateValue(nRecord),
 		))
-
 	}
 
 	am := ctypes.NewAmount(fact.Amount(), cid)

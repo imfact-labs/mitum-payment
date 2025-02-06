@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -74,19 +75,27 @@ func (fact DepositFact) Bytes() []byte {
 }
 
 func (fact DepositFact) IsValid(b []byte) error {
-	if err := fact.BaseHinter.IsValid(nil); err != nil {
-		return common.ErrFactInvalid.Wrap(err)
+	if fact.sender.Equal(fact.contract) {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrSelfTarget.Wrap(errors.Errorf("sender %v is same with contract account", fact.sender)))
 	}
 
-	if fact.startTime > fact.endTime {
-		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Errorf("start time cannot be bigger than end time"))
-	}
-
-	if fact.duration > (fact.endTime - fact.startTime) {
-		return common.ErrFactInvalid.Wrap(common.ErrValueInvalid.Errorf("duration cannot be greater than the difference between start and end time"))
+	if fact.Amount().IsZero() {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValueInvalid.Errorf("amount cannot be zero"))
+	} else if fact.endTime == 0 {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValueInvalid.Errorf("end time cannot be zero"))
+	} else if fact.startTime >= fact.endTime {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValueInvalid.Errorf("start time cannot be greater than end time or equal with end time"))
+	} else if fact.duration > (fact.endTime - fact.startTime) {
+		return common.ErrFactInvalid.Wrap(
+			common.ErrValueInvalid.Errorf("duration cannot be greater than the difference between start and end time"))
 	}
 
 	if err := util.CheckIsValiders(nil, false,
+		fact.BaseHinter,
 		fact.sender,
 		fact.contract,
 		fact.amount,

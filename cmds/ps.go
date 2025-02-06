@@ -58,6 +58,11 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 		payment.NewWithdrawProcessor(),
 	); err != nil {
 		return pctx, err
+	} else if err := opr.SetProcessor(
+		payment.UpdateAccountSettingHint,
+		payment.NewUpdateAccountSettingProcessor(),
+	); err != nil {
+		return pctx, err
 	} else if err := opr.SetProcessorWithProposal(
 		payment.TransferHint,
 		payment.NewTransferProcessor(),
@@ -84,6 +89,15 @@ func POperationProcessorsMap(pctx context.Context) (context.Context, error) {
 	})
 
 	_ = setA.Add(payment.WithdrawHint, func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
+		return opr.New(
+			height,
+			getStatef,
+			nil,
+			nil,
+		)
+	})
+
+	_ = setA.Add(payment.UpdateAccountSettingHint, func(height base.Height, getStatef base.GetStateFunc) (base.OperationProcessor, error) {
 		return opr.New(
 			height,
 			getStatef,

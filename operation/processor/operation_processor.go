@@ -100,6 +100,12 @@ func CheckDuplication(opr *cprocessor.OperationProcessor, op base.Operation) err
 			return errors.Errorf("expected TransferFact, not %T", t.Fact())
 		}
 		duplicationTypeContractID = cprocessor.DuplicationKey(fact.Contract().String(), DuplicationTypeContract)
+	case payment.UpdateAccountSetting:
+		fact, ok := t.Fact().(payment.UpdateAccountSettingFact)
+		if !ok {
+			return errors.Errorf("expected UpdateAccountSettingFact, not %T", t.Fact())
+		}
+		duplicationTypeSenderID = cprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 	case payment.Withdraw:
 		fact, ok := t.Fact().(payment.WithdrawFact)
 		if !ok {
@@ -179,6 +185,7 @@ func GetNewProcessor(opr *cprocessor.OperationProcessor, op base.Operation) (bas
 		payment.RegisterModel,
 		payment.Deposit,
 		payment.Transfer,
+		payment.UpdateAccountSetting,
 		payment.Withdraw:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:

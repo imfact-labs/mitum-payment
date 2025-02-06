@@ -8,6 +8,7 @@ import (
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/ProtoconNet/mitum2/util/hint"
 	"github.com/ProtoconNet/mitum2/util/valuehash"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -65,6 +66,10 @@ func (fact TransferFact) Bytes() []byte {
 func (fact TransferFact) IsValid(b []byte) error {
 	if err := fact.BaseHinter.IsValid(nil); err != nil {
 		return common.ErrFactInvalid.Wrap(err)
+	}
+
+	if fact.amount.IsZero() {
+		common.ErrValOOR.Wrap(errors.Errorf("transfer amount should be over zero"))
 	}
 
 	if err := util.CheckIsValiders(nil, false,
