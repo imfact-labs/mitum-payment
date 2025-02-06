@@ -1,4 +1,4 @@
-package deposit
+package payment
 
 import (
 	"context"
@@ -204,8 +204,9 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 		), nil
 	}
 
+	nAmount := record.Amount(cid.String()).Sub(fact.Amount())
 	nRecord := types.NewDepositRecord(fact.Sender())
-	nRecord.SetItem(cid.String(), record.Amount(cid.String()).Sub(fact.Amount()), nowTime)
+	nRecord.SetItem(cid.String(), nAmount, nowTime)
 
 	if err := nRecord.IsValid(nil); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(

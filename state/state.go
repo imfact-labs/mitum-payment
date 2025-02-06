@@ -84,13 +84,13 @@ var (
 
 type DepositRecordStateValue struct {
 	hint.BaseHinter
-	DepositRecord types.DepositRecord
+	Record types.DepositRecord
 }
 
-func NewDepositRecordStateValue(depositInfo types.DepositRecord) DepositRecordStateValue {
+func NewDepositRecordStateValue(record types.DepositRecord) DepositRecordStateValue {
 	return DepositRecordStateValue{
-		BaseHinter:    hint.NewBaseHinter(DepositRecordStateValueHint),
-		DepositRecord: depositInfo,
+		BaseHinter: hint.NewBaseHinter(DepositRecordStateValueHint),
+		Record:     record,
 	}
 }
 
@@ -109,7 +109,7 @@ func (sv DepositRecordStateValue) IsValid([]byte) error {
 }
 
 func (sv DepositRecordStateValue) HashBytes() []byte {
-	return util.ConcatBytesSlice(sv.DepositRecord.Bytes())
+	return util.ConcatBytesSlice(sv.Record.Bytes())
 }
 
 func GetDepositRecordFromState(st base.State) (*types.DepositRecord, error) {
@@ -123,7 +123,7 @@ func GetDepositRecordFromState(st base.State) (*types.DepositRecord, error) {
 		return nil, errors.Errorf("expected DepositRecordStateValue but, %T", v)
 	}
 
-	return &isv.DepositRecord, nil
+	return &isv.Record, nil
 }
 
 func IsDepositRecordStateKey(key string) bool {

@@ -1,8 +1,9 @@
-package deposit
+package payment
 
 import (
 	"context"
 	"github.com/ProtoconNet/mitum-currency/v3/state/currency"
+	"github.com/ProtoconNet/mitum-payment/types"
 	"sync"
 
 	"github.com/ProtoconNet/mitum-currency/v3/common"
@@ -149,15 +150,19 @@ func (opp *WithdrawProcessor) Process( // nolint:dupl
 	big := record.Amount(cid.String())
 	am := ctypes.NewAmount(*big, cid)
 
-	design.RemoveAccountSetting(fact.Sender())
-	if err := design.IsValid(nil); err != nil {
+	nDesign := types.NewDesign()
+	for _, v := range design.AccountSettings() {
+		nDesign.AddAccountSetting(v)
+	}
+	nDesign.RemoveAccountSetting(fact.Sender())
+	if err := nDesign.IsValid(nil); err != nil {
 		return nil, base.NewBaseOperationProcessReasonError("invalid service design, %q; %w", fact.Contract(), err), nil
 	}
 
 	var sts []base.StateMergeValue // nolint:prealloc
 	sts = append(sts, cstate.NewStateMergeValue(
 		state.DesignStateKey(fact.Contract().String()),
-		state.NewDesignStateValue(design),
+		state.NewDesignStateValue(nDesign),
 	))
 	sts = append(
 		sts,

@@ -3,7 +3,7 @@ package cmds
 import (
 	"context"
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum-payment/operation/deposit"
+	"github.com/ProtoconNet/mitum-payment/operation/payment"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -68,7 +68,7 @@ func (cmd *DepositCommand) parseFlags() error {
 func (cmd *DepositCommand) createOperation() (base.Operation, error) { // nolint:dupl
 	e := util.StringError("failed to create deposit operation")
 
-	fact := deposit.NewDepositFact(
+	fact := payment.NewDepositFact(
 		[]byte(cmd.Token), cmd.sender, cmd.contract, cmd.Amount.Big, cmd.TransferLimit.Big,
 		cmd.StartTime, cmd.EndTime, cmd.Duration, cmd.Currency.CID,
 	)
@@ -76,7 +76,7 @@ func (cmd *DepositCommand) createOperation() (base.Operation, error) { // nolint
 		return nil, err
 	}
 
-	op, err := deposit.NewDeposit(fact)
+	op, err := payment.NewDeposit(fact)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}

@@ -1,4 +1,4 @@
-package deposit
+package payment
 
 import (
 	"context"
@@ -84,7 +84,7 @@ func (opp *DepositProcessor) PreProcess(
 				Errorf("%v", err)), nil
 	}
 
-	st, _ := cstate.ExistsState(state.DesignStateKey(fact.Contract().String()), "service design", getStateFunc)
+	st, err := cstate.ExistsState(state.DesignStateKey(fact.Contract().String()), "service design", getStateFunc)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
@@ -92,12 +92,23 @@ func (opp *DepositProcessor) PreProcess(
 				fact.Contract(),
 			)), nil
 	}
-	_, err = state.GetDesignFromState(st)
+	design, err := state.GetDesignFromState(st)
 	if err != nil {
 		return nil, base.NewBaseOperationProcessReasonError(
 			common.ErrMPreProcess.
 				Wrap(common.ErrMStateValInvalid).Errorf(
-				"service design value not found, %q; %v", fact.Contract(), err)), nil
+				"service design value not found, %v: %v", fact.Contract(), err)), nil
+	}
+	setting := design.AccountSetting(fact.Sender().String())
+	if setting != nil {
+		st, err = cstate.ExistsState(state.DepositRecordStateKey(
+			fact.Contract().String(), fact.Sender().String()), "account record", getStateFunc)
+		if err != nil {
+			return nil, base.NewBaseOperationProcessReasonError(
+				common.ErrMPreProcess.
+					Wrap(common.ErrMStateNF).Errorf(
+					"record of account, %v nof found in contract account, %v: %v", fact.Sender(), fact.Contract(), err)), nil
+		}
 	}
 
 	return ctx, nil, nil
@@ -115,6 +126,7 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 
 	var sts []base.StateMergeValue // nolint:prealloc
 	setting := design.AccountSetting(fact.Sender().String())
+
 	if setting != nil {
 		// additional deposit
 		st, _ := cstate.ExistsState(state.DepositRecordStateKey(
@@ -126,7 +138,8 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 			return nil, base.NewBaseOperationProcessReasonError(
 				"record of account, %v nof found in contract account, %v", fact.Sender(), fact.Contract()), nil
 		}
-		nRecord.SetItem(cid.String(), *record.Amount(cid.String()), *record.TransferredAt(cid.String()))
+		nAmount := record.Amount(cid.String()).Add(fact.Amount())
+		nRecord.SetItem(cid.String(), nAmount, *record.TransferredAt(cid.String()))
 
 		if err := nRecord.IsValid(nil); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError(
@@ -142,11 +155,15 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 			// update AccountSetting
 			nSetting := types.NewSettings(fact.Sender())
 			nSetting.SetItem(cid.String(), fact.TransferLimit(), fact.StartTime(), fact.EndTime(), fact.Duration())
-			design.UpdateAccountSetting(nSetting)
+			nDesign := types.NewDesign()
+			for _, v := range design.AccountSettings() {
+				nDesign.AddAccountSetting(v)
+			}
+			nDesign.UpdateAccountSetting(nSetting)
 
 			sts = append(sts, cstate.NewStateMergeValue(
 				state.DesignStateKey(fact.Contract().String()),
-				state.NewDesignStateValue(design),
+				state.NewDesignStateValue(nDesign),
 			))
 		}
 	} else {
@@ -159,19 +176,23 @@ func (opp *DepositProcessor) Process( // nolint:dupl
 		}
 		nSetting := types.NewSettings(fact.Sender())
 		nSetting.SetItem(cid.String(), fact.TransferLimit(), fact.StartTime(), fact.EndTime(), fact.Duration())
-		err := design.AddAccountSetting(nSetting)
+		nDesign := types.NewDesign()
+		for _, v := range design.AccountSettings() {
+			nDesign.AddAccountSetting(v)
+		}
+		err := nDesign.AddAccountSetting(nSetting)
 		if err != nil {
 			return nil, base.NewBaseOperationProcessReasonError(
 				"failed to add setting of account, %v in contract account %v: %w", fact.Sender(), fact.Contract(), err,
 			), nil
 		}
-		if err := design.IsValid(nil); err != nil {
+		if err := nDesign.IsValid(nil); err != nil {
 			return nil, base.NewBaseOperationProcessReasonError("invalid service design, %q; %w", fact.Contract(), err), nil
 		}
 
 		sts = append(sts, cstate.NewStateMergeValue(
 			state.DesignStateKey(fact.Contract().String()),
-			state.NewDesignStateValue(design),
+			state.NewDesignStateValue(nDesign),
 		))
 
 		// new AccountRecord

@@ -48,15 +48,15 @@ func (sv *DesignStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
 func (sv DepositRecordStateValue) MarshalBSON() ([]byte, error) {
 	return bsonenc.Marshal(
 		bson.M{
-			"_hint":        sv.Hint().String(),
-			"deposit_info": sv.DepositRecord,
+			"_hint":          sv.Hint().String(),
+			"deposit_record": sv.Record,
 		},
 	)
 }
 
 type DepositRecordStateValueBSONUnmarshaler struct {
 	Hint          string   `bson:"_hint"`
-	DepositRecord bson.Raw `bson:"deposit_info"`
+	DepositRecord bson.Raw `bson:"deposit_record"`
 }
 
 func (sv *DepositRecordStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) error {
@@ -77,7 +77,7 @@ func (sv *DepositRecordStateValue) DecodeBSON(b []byte, enc *bsonenc.Encoder) er
 	if err := depositInfo.DecodeBSON(u.DepositRecord, enc); err != nil {
 		return e.Wrap(err)
 	}
-	sv.DepositRecord = depositInfo
+	sv.Record = depositInfo
 
 	return nil
 }

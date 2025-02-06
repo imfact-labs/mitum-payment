@@ -3,7 +3,7 @@ package cmds
 import (
 	"context"
 	currencycmds "github.com/ProtoconNet/mitum-currency/v3/cmds"
-	"github.com/ProtoconNet/mitum-payment/operation/deposit"
+	"github.com/ProtoconNet/mitum-payment/operation/payment"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/ProtoconNet/mitum2/util"
 	"github.com/pkg/errors"
@@ -63,9 +63,9 @@ func (cmd *WithdrawCommand) parseFlags() error {
 func (cmd *WithdrawCommand) createOperation() (base.Operation, error) { // nolint:dupl
 	e := util.StringError("failed to create withdraw operation")
 
-	fact := deposit.NewWithdrawFact([]byte(cmd.Token), cmd.sender, cmd.contract, cmd.Currency.CID)
+	fact := payment.NewWithdrawFact([]byte(cmd.Token), cmd.sender, cmd.contract, cmd.Currency.CID)
 
-	op, err := deposit.NewWithdraw(fact)
+	op, err := payment.NewWithdraw(fact)
 	if err != nil {
 		return nil, e.Wrap(err)
 	}

@@ -1,4 +1,4 @@
-package deposit
+package payment
 
 import (
 	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
@@ -6,11 +6,9 @@ import (
 	"github.com/ProtoconNet/mitum2/util/encoder"
 )
 
-func (fact *DepositFact) unpack(
+func (fact *TransferFact) unpack(
 	enc encoder.Encoder,
-	sa, ca string,
-	st, et, dur uint64,
-	ci string,
+	sa, ca, ra, ci string,
 ) error {
 	switch sender, err := base.DecodeAddress(sa, enc); {
 	case err != nil:
@@ -26,9 +24,13 @@ func (fact *DepositFact) unpack(
 		fact.contract = contract
 	}
 
-	fact.startTime = st
-	fact.endTime = et
-	fact.duration = dur
+	switch receiver, err := base.DecodeAddress(ra, enc); {
+	case err != nil:
+		return err
+	default:
+		fact.receiver = receiver
+	}
+
 	fact.currency = ctypes.CurrencyID(ci)
 
 	return nil

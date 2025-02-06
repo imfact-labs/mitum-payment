@@ -46,7 +46,7 @@ func (sv *DesignStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
 
 type DepositRecordStateValueJSONMarshaler struct {
 	hint.BaseHinter
-	DepositRecord types.DepositRecord `json:"deposit_info"`
+	Record types.DepositRecord `json:"deposit_record"`
 }
 
 func (sv DepositRecordStateValue) MarshalJSON() ([]byte, error) {
@@ -57,7 +57,7 @@ func (sv DepositRecordStateValue) MarshalJSON() ([]byte, error) {
 
 type DepositRecordStateValueJSONUnmarshaler struct {
 	Hint          hint.Hint       `json:"_hint"`
-	DepositRecord json.RawMessage `json:"deposit_info"`
+	DepositRecord json.RawMessage `json:"deposit_record"`
 }
 
 func (sv *DepositRecordStateValue) DecodeJSON(b []byte, enc encoder.Encoder) error {
@@ -73,7 +73,7 @@ func (sv *DepositRecordStateValue) DecodeJSON(b []byte, enc encoder.Encoder) err
 	if err := depositInfo.DecodeJSON(u.DepositRecord, enc); err != nil {
 		return e.Wrap(err)
 	}
-	sv.DepositRecord = depositInfo
+	sv.Record = depositInfo
 
 	return nil
 }

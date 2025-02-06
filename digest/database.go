@@ -102,7 +102,8 @@ func AccountInfo(db *cdigest.Database, contract, account string) (*AccountInfoVa
 
 	accountInfo := design.AccountSetting(account)
 	if accountInfo == nil {
-		return nil, errors.Errorf("payment account info not found by contract account %s, account %s", contract, account)
+		return nil, utilm.ErrNotFound.Errorf(
+			"payment account info not found by contract account %s, account %s", contract, account)
 	}
 
 	accountInfoValue := NewAccountInfoValue(*accountInfo, *accountRecord)

@@ -5,7 +5,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/operation/extension"
 	cprocessor "github.com/ProtoconNet/mitum-currency/v3/operation/processor"
 	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
-	"github.com/ProtoconNet/mitum-payment/operation/deposit"
+	"github.com/ProtoconNet/mitum-payment/operation/payment"
 	"github.com/ProtoconNet/mitum2/base"
 	"github.com/pkg/errors"
 )
@@ -81,27 +81,27 @@ func CheckDuplication(opr *cprocessor.OperationProcessor, op base.Operation) err
 			return errors.Errorf("expected WithdrawFact, not %T", t.Fact())
 		}
 		duplicationTypeSenderID = cprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
-	case deposit.RegisterModel:
-		fact, ok := t.Fact().(deposit.RegisterModelFact)
+	case payment.RegisterModel:
+		fact, ok := t.Fact().(payment.RegisterModelFact)
 		if !ok {
 			return errors.Errorf("expected CreateServiceFact, not %T", t.Fact())
 		}
 		duplicationTypeSenderID = cprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
 		duplicationTypeContractID = cprocessor.DuplicationKey(fact.Contract().String(), DuplicationTypeContract)
-	case deposit.Deposit:
-		fact, ok := t.Fact().(deposit.DepositFact)
+	case payment.Deposit:
+		fact, ok := t.Fact().(payment.DepositFact)
 		if !ok {
 			return errors.Errorf("expected DepositFact, not %T", t.Fact())
 		}
 		duplicationTypeSenderID = cprocessor.DuplicationKey(fact.Sender().String(), DuplicationTypeSender)
-	case deposit.Transfer:
-		fact, ok := t.Fact().(deposit.TransferFact)
+	case payment.Transfer:
+		fact, ok := t.Fact().(payment.TransferFact)
 		if !ok {
 			return errors.Errorf("expected TransferFact, not %T", t.Fact())
 		}
 		duplicationTypeContractID = cprocessor.DuplicationKey(fact.Contract().String(), DuplicationTypeContract)
-	case deposit.Withdraw:
-		fact, ok := t.Fact().(deposit.WithdrawFact)
+	case payment.Withdraw:
+		fact, ok := t.Fact().(payment.WithdrawFact)
 		if !ok {
 			return errors.Errorf("expected UpdateAccountInfoFact, not %T", t.Fact())
 		}
@@ -176,10 +176,10 @@ func GetNewProcessor(opr *cprocessor.OperationProcessor, op base.Operation) (bas
 		currency.RegisterCurrency,
 		currency.UpdateCurrency,
 		currency.Mint,
-		deposit.RegisterModel,
-		deposit.Deposit,
-		deposit.Transfer,
-		deposit.Withdraw:
+		payment.RegisterModel,
+		payment.Deposit,
+		payment.Transfer,
+		payment.Withdraw:
 		return nil, false, errors.Errorf("%T needs SetProcessor", t)
 	default:
 		return nil, false, nil

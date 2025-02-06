@@ -1,4 +1,4 @@
-package deposit
+package payment
 
 import (
 	"github.com/ProtoconNet/mitum-currency/v3/types"
