@@ -30,7 +30,7 @@ func (hd *Handlers) handlePaymentDesign(w http.ResponseWriter, r *http.Request) 
 		cdigest.HTTP2WriteHalBytes(hd.encoder, w, v.([]byte), http.StatusOK)
 
 		if !shared {
-			cdigest.HTTP2WriteCache(w, cacheKey, time.Second*3)
+			cdigest.HTTP2WriteCache(w, cacheKey, time.Millisecond*100)
 		}
 	}
 }
@@ -105,7 +105,7 @@ func (hd *Handlers) handlePaymentAccountInfo(w http.ResponseWriter, r *http.Requ
 		cdigest.HTTP2WriteHalBytes(hd.encoder, w, v.([]byte), http.StatusOK)
 
 		if !shared {
-			cdigest.HTTP2WriteCache(w, cachekey, time.Second*3)
+			cdigest.HTTP2WriteCache(w, cachekey, time.Millisecond*100)
 		}
 	}
 }

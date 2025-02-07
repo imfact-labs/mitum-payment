@@ -182,6 +182,14 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 	nowTime := uint64(proposal.ProposalFact().ProposedAt().Unix())
 	var pTime *[3]uint64
 
+	var sts []base.StateMergeValue // nolint:prealloc
+	smv, err := cstate.CreateNotExistAccount(fact.Receiver(), getStateFunc)
+	if err != nil {
+		return nil, base.NewBaseOperationProcessReasonError("%w", err), nil
+	} else if smv != nil {
+		sts = append(sts, smv)
+	}
+
 	st, _ := cstate.ExistsState(state.DesignStateKey(fact.Contract().String()), "service design", getStateFunc)
 	design, _ := state.GetDesignFromState(st)
 	setting := design.AccountSetting(fact.Sender().String())
@@ -222,7 +230,6 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 			"invalid record of account, %v in contract account %v: %w", fact.Sender(), fact.Contract(), err), nil
 	}
 
-	var sts []base.StateMergeValue // nolint:prealloc
 	sts = append(sts, cstate.NewStateMergeValue(
 		state.DepositRecordStateKey(fact.Contract().String(), fact.Sender().String()),
 		state.NewDepositRecordStateValue(nRecord),
