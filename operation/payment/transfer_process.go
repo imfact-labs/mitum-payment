@@ -213,7 +213,7 @@ func (opp *TransferProcessor) Process( // nolint:dupl
 	record, _ := state.GetDepositRecordFromState(st)
 	if lastTime := record.TransferredAt(cid.String()); (*lastTime + pTime[2]) > nowTime {
 		return nil, base.NewBaseOperationProcessReasonError(
-			"last time of transfer, %v is too recent. Wait until required cool time, %v for account, %v in contract account %v.",
+			"last transfer time, %v is too recent. Wait for the required cool time, %v seconds for account, %v in contract account %v.",
 			*lastTime, pTime[2], fact.Sender(), fact.Contract(),
 		), nil
 	}
