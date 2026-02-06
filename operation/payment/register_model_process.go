@@ -7,7 +7,7 @@ import (
 	"github.com/ProtoconNet/mitum-currency/v3/common"
 	cstate "github.com/ProtoconNet/mitum-currency/v3/state"
 	cestate "github.com/ProtoconNet/mitum-currency/v3/state/extension"
-	currencytypes "github.com/ProtoconNet/mitum-currency/v3/types"
+	ctypes "github.com/ProtoconNet/mitum-currency/v3/types"
 	"github.com/ProtoconNet/mitum-payment/state"
 	"github.com/ProtoconNet/mitum-payment/types"
 	"github.com/ProtoconNet/mitum2/base"
@@ -25,7 +25,7 @@ type RegisterModelProcessor struct {
 	*base.BaseOperationProcessor
 }
 
-func NewRegisterModelProcessor() currencytypes.GetNewProcessor {
+func NewRegisterModelProcessor() ctypes.GetNewProcessor {
 	return func(
 		height base.Height,
 		getStateFunc base.GetStateFunc,
@@ -103,7 +103,7 @@ func (opp *RegisterModelProcessor) Process(
 	ca.SetActive(true)
 	h := op.Hint()
 	ca.SetRegisterOperation(&h)
-	ca.SetBalanceStatus(currencytypes.WithdrawalBlocked)
+	ca.SetBalanceStatus(ctypes.WithdrawalBlocked)
 
 	sts = append(sts, cstate.NewStateMergeValue(
 		cestate.StateKeyContractAccount(fact.Contract()),
